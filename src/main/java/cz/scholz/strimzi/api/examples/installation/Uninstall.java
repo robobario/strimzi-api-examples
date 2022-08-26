@@ -11,8 +11,8 @@ import io.fabric8.kubernetes.api.model.rbac.ClusterRole;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBinding;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ public class Uninstall {
     private static final boolean WATCH_ALL_NAMESPACES = true; // When set to true, the operator will watch all namespaces. When set to false, it will watch only the OPERATOR_NAMESPACE namespace
 
     public static void main(String[] args) {
-        try (KubernetesClient client = new DefaultKubernetesClient()) {
+        try (KubernetesClient client = new KubernetesClientBuilder().build()) {
             LOGGER.info("Loading installation files from {}", INSTALLATION_YAML);
             List<HasMetadata> resources = client.load(new BufferedInputStream(new URL(INSTALLATION_YAML).openStream())).get();
 
@@ -38,16 +38,16 @@ public class Uninstall {
                     LOGGER.info("Deleting {} named {} in namespace {}", resource.getKind(), resource.getMetadata().getName(), OPERATOR_NAMESPACE);
                     resource.getMetadata().setNamespace(OPERATOR_NAMESPACE);
                     ServiceAccount sa = (ServiceAccount) resource;
-                    client.serviceAccounts().inNamespace(OPERATOR_NAMESPACE).delete(sa);
+                    client.serviceAccounts().inNamespace(OPERATOR_NAMESPACE).resource(sa).delete();
                 } else if (resource instanceof ClusterRole) {
                     LOGGER.info("Deleting {} named {}", resource.getKind(), resource.getMetadata().getName());
                     ClusterRole cr = (ClusterRole) resource;
-                    client.rbac().clusterRoles().delete(cr);
+                    client.rbac().clusterRoles().resource(cr).delete();
                 } else if (resource instanceof ClusterRoleBinding) {
                     LOGGER.info("Deleting {} named {}", resource.getKind(), resource.getMetadata().getName());
                     ClusterRoleBinding crb = (ClusterRoleBinding) resource;
                     crb.getSubjects().forEach(sbj -> sbj.setNamespace(OPERATOR_NAMESPACE));
-                    client.rbac().clusterRoleBindings().delete(crb);
+                    client.rbac().clusterRoleBindings().resource(crb).delete();
                 } else if (resource instanceof RoleBinding) {
                     resource.getMetadata().setNamespace(OPERATOR_NAMESPACE);
                     RoleBinding rb = (RoleBinding) resource;
@@ -65,20 +65,20 @@ public class Uninstall {
                                 .build();
 
                         LOGGER.info("Deleting {} named {}", crb.getKind(), crb.getMetadata().getName());
-                        client.rbac().clusterRoleBindings().delete(crb);
+                        client.rbac().clusterRoleBindings().resource(crb).delete();
                     } else {
                         LOGGER.info("Deleting {} named {} in namespace {}", resource.getKind(), resource.getMetadata().getName(), OPERATOR_NAMESPACE);
-                        client.rbac().roleBindings().inNamespace(OPERATOR_NAMESPACE).delete(rb);
+                        client.rbac().roleBindings().inNamespace(OPERATOR_NAMESPACE).resource(rb).delete();
                     }
                 } else if (resource instanceof CustomResourceDefinition) {
                     LOGGER.info("Deleting {} named {}", resource.getKind(), resource.getMetadata().getName());
                     CustomResourceDefinition crd = (CustomResourceDefinition) resource;
-                    client.apiextensions().v1().customResourceDefinitions().delete(crd);
+                    client.apiextensions().v1().customResourceDefinitions().resource(crd).delete();
                 } else if (resource instanceof ConfigMap) {
                     LOGGER.info("Deleting {} named {} in namespace {}", resource.getKind(), resource.getMetadata().getName(), OPERATOR_NAMESPACE);
                     resource.getMetadata().setNamespace(OPERATOR_NAMESPACE);
                     ConfigMap cm = (ConfigMap) resource;
-                    client.configMaps().inNamespace(OPERATOR_NAMESPACE).delete(cm);
+                    client.configMaps().inNamespace(OPERATOR_NAMESPACE).resource(cm).delete();
                 } else if (resource instanceof Deployment) {
                     LOGGER.info("Deleting {} named {} in namespace {}", resource.getKind(), resource.getMetadata().getName(), OPERATOR_NAMESPACE);
                     resource.getMetadata().setNamespace(OPERATOR_NAMESPACE);
@@ -91,7 +91,7 @@ public class Uninstall {
                         envVar.setValue("*");
                     }
 
-                    client.apps().deployments().inNamespace(OPERATOR_NAMESPACE).delete(dep);
+                    client.apps().deployments().inNamespace(OPERATOR_NAMESPACE).resource(dep).delete();
                 } else {
                     LOGGER.info("Unknown resource {} named {}", resource.getKind(), resource.getMetadata().getName());
                 }

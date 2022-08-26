@@ -1,7 +1,7 @@
 package cz.scholz.strimzi.api.examples.connect;
 
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import io.strimzi.api.kafka.Crds;
 import io.strimzi.api.kafka.model.KafkaConnect;
 import io.strimzi.api.kafka.model.KafkaConnectBuilder;
@@ -29,7 +29,7 @@ public class CreateConnectAndConnector {
     private static final String TIMER_CONNECTOR_NAME = "timer-connector";
 
     public static void main(String[] args) {
-        try (KubernetesClient client = new DefaultKubernetesClient()) {
+        try (KubernetesClient client = new KubernetesClientBuilder().build()) {
             Map<String, Object> connectConfig = new HashMap<>();
             connectConfig.put("group.id", "connect-cluster");
             connectConfig.put("offset.storage.topic", "connect-cluster-offsets");
@@ -64,7 +64,7 @@ public class CreateConnectAndConnector {
                     .build();
 
             LOGGER.info("Creating the Kafka Connect cluster");
-            Crds.kafkaConnectOperation(client).inNamespace(NAMESPACE).create(connect);
+            Crds.kafkaConnectOperation(client).inNamespace(NAMESPACE).resource(connect).create();
 
             LOGGER.info("Waiting for the Connect cluster to be ready");
             Crds.kafkaConnectOperation(client).inNamespace(NAMESPACE).withName(CONNECT_NAME).waitUntilCondition(con -> {
@@ -94,7 +94,7 @@ public class CreateConnectAndConnector {
                     .build();
 
             LOGGER.info("Creating the topic");
-            Crds.topicOperation(client).inNamespace(NAMESPACE).create(topic);
+            Crds.topicOperation(client).inNamespace(NAMESPACE).resource(topic).create();
 
             LOGGER.info("Waiting for the topic to be ready");
             Crds.topicOperation(client).inNamespace(NAMESPACE).withName(TOPIC_NAME).waitUntilCondition(t -> {
@@ -123,7 +123,7 @@ public class CreateConnectAndConnector {
                     .build();
 
             LOGGER.info("Creating the Echo connector");
-            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).create(echoConnector);
+            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).resource(echoConnector).create();
 
             LOGGER.info("Waiting for the Echo connector to be ready");
             Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).withName(ECHO_CONNECTOR_NAME).waitUntilCondition(cntr -> {
@@ -167,7 +167,7 @@ public class CreateConnectAndConnector {
                     .build();
 
             LOGGER.info("Creating the Timer connector");
-            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).create(timerConnector);
+            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).resource(timerConnector).create();
 
             LOGGER.info("Waiting for the Timer connector to be ready");
             Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).withName(TIMER_CONNECTOR_NAME).waitUntilCondition(cntr -> {
