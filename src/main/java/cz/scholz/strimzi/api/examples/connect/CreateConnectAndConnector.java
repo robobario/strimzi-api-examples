@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static io.strimzi.api.kafka.model.CustomResourceConditions.isReady;
+
 public class CreateConnectAndConnector {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateConnectAndConnector.class);
     private static final String NAMESPACE = "myproject";
@@ -67,14 +69,7 @@ public class CreateConnectAndConnector {
             Crds.kafkaConnectOperation(client).inNamespace(NAMESPACE).resource(connect).create();
 
             LOGGER.info("Waiting for the Connect cluster to be ready");
-            Crds.kafkaConnectOperation(client).inNamespace(NAMESPACE).withName(CONNECT_NAME).waitUntilCondition(con -> {
-                if (con.getStatus() != null && con.getStatus().getConditions() != null) {
-                    return con.getMetadata().getGeneration() == con.getStatus().getObservedGeneration()
-                            && con.getStatus().getConditions().stream().anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus()));
-                } else {
-                    return false;
-                }
-            }, 10, TimeUnit.MINUTES);
+            Crds.kafkaConnectOperation(client).inNamespace(NAMESPACE).withName(CONNECT_NAME).waitUntilCondition(isReady(), 10, TimeUnit.MINUTES);
 
             LOGGER.info("Connect cluster is ready");
 
@@ -97,14 +92,7 @@ public class CreateConnectAndConnector {
             Crds.topicOperation(client).inNamespace(NAMESPACE).resource(topic).create();
 
             LOGGER.info("Waiting for the topic to be ready");
-            Crds.topicOperation(client).inNamespace(NAMESPACE).withName(TOPIC_NAME).waitUntilCondition(t -> {
-                if (t.getStatus() != null && t.getStatus().getConditions() != null) {
-                    return t.getMetadata().getGeneration() == t.getStatus().getObservedGeneration()
-                            && t.getStatus().getConditions().stream().anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus()));
-                } else {
-                    return false;
-                }
-            }, 5, TimeUnit.MINUTES);
+            Crds.topicOperation(client).inNamespace(NAMESPACE).withName(TOPIC_NAME).waitUntilCondition(isReady(), 5, TimeUnit.MINUTES);
 
             LOGGER.info("Topic is ready");
 
@@ -126,14 +114,7 @@ public class CreateConnectAndConnector {
             Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).resource(echoConnector).create();
 
             LOGGER.info("Waiting for the Echo connector to be ready");
-            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).withName(ECHO_CONNECTOR_NAME).waitUntilCondition(cntr -> {
-                if (cntr.getStatus() != null && cntr.getStatus().getConditions() != null) {
-                    return cntr.getMetadata().getGeneration() == cntr.getStatus().getObservedGeneration()
-                            && cntr.getStatus().getConditions().stream().anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus()));
-                } else {
-                    return false;
-                }
-            }, 5, TimeUnit.MINUTES);
+            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).withName(ECHO_CONNECTOR_NAME).waitUntilCondition(isReady(), 5, TimeUnit.MINUTES);
 
             LOGGER.info("Echo connector is ready");
 
@@ -170,14 +151,7 @@ public class CreateConnectAndConnector {
             Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).resource(timerConnector).create();
 
             LOGGER.info("Waiting for the Timer connector to be ready");
-            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).withName(TIMER_CONNECTOR_NAME).waitUntilCondition(cntr -> {
-                if (cntr.getStatus() != null && cntr.getStatus().getConditions() != null) {
-                    return cntr.getMetadata().getGeneration() == cntr.getStatus().getObservedGeneration()
-                            && cntr.getStatus().getConditions().stream().anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus()));
-                } else {
-                    return false;
-                }
-            }, 5, TimeUnit.MINUTES);
+            Crds.kafkaConnectorOperation(client).inNamespace(NAMESPACE).withName(TIMER_CONNECTOR_NAME).waitUntilCondition(isReady(), 5, TimeUnit.MINUTES);
 
             LOGGER.info("Timer connector is ready");
         }

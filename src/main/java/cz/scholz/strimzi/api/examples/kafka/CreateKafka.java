@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.strimzi.api.kafka.model.CustomResourceConditions.isReady;
+
 public class CreateKafka {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateKafka.class);
     private static final String NAMESPACE = "myproject";
@@ -56,6 +58,8 @@ public class CreateKafka {
                             .withNewUserOperator()
                             .endUserOperator()
                         .endEntityOperator()
+                        .withNewCruiseControl()
+                        .endCruiseControl()
                     .endSpec()
                     .build();
 
@@ -63,14 +67,7 @@ public class CreateKafka {
             Crds.kafkaOperation(client).inNamespace(NAMESPACE).resource(kafka).create();
 
             LOGGER.info("Waiting for the cluster to be ready");
-            Crds.kafkaOperation(client).inNamespace(NAMESPACE).withName(NAME).waitUntilCondition(k -> {
-                if (k.getStatus() != null && k.getStatus().getConditions() != null) {
-                    return k.getMetadata().getGeneration() == k.getStatus().getObservedGeneration()
-                            && k.getStatus().getConditions().stream().anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus()));
-                } else {
-                    return false;
-                }
-            }, 5, TimeUnit.MINUTES);
+            Crds.kafkaOperation(client).inNamespace(NAMESPACE).withName(NAME).waitUntilCondition(isReady(), 5, TimeUnit.MINUTES);
 
             LOGGER.info("Kafka cluster is ready");
         }
